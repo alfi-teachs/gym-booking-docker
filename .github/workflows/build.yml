@@ -3,6 +3,11 @@ name: build scan and push
   push:
     branches:
       - main
+
+permissions:
+  contents: read
+  id-token: write # lets the job request an OIDC
+
   workflow_dispatch:
 jobs:
   build-test-push:
@@ -32,7 +37,7 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
-          
+
       - name: Integration test (docker compose)
         run: |
           cp .env.example .env
@@ -50,3 +55,26 @@ jobs:
       - name: Stop containers
         if: always()
         run: docker compose down -v      
+  
+      - name: Configure AWS credentials (OIDC)
+        if: github.event_name != 'pull_request'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        if: github.event_name != 'pull_request'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push image to ECR
+        if: github.event_name != 'pull_request'
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+        run: |
+          for TAG in "${{ github.sha }}" latest; do
+            docker tag "$IMAGE_NAME:$TAG" "$REGISTRY/$REPOSITORY:$TAG"
+            docker push "$REGISTRY/$REPOSITORY:$TAG"
+          done 
