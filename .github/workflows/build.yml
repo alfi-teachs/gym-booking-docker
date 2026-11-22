@@ -3,12 +3,12 @@ name: build scan and push
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
   id-token: write # lets the job request an OIDC
-
-  workflow_dispatch:
+  
 jobs:
   build-test-push:
     runs-on: ubuntu-latest
