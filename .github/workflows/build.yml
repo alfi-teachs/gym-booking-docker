@@ -32,3 +32,21 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
+          
+      - name: Integration test (docker compose)
+        run: |
+          cp .env.example .env
+          docker compose up -d --no-build --wait
+          curl -fsS http://localhost:8080/api/health
+          curl -fsS http://localhost:8080/api/classes
+          curl -fsS -X POST http://localhost:8080/api/bookings \
+            -H "Content-Type: application/json" \
+            -d '{"class_id": 1, "member_name": "ci-test"}'
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v      
