@@ -23,3 +23,11 @@ jobs:
 
       - name: List images
         run: docker images
+
+      - name: Scan image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: "$IMAGE_NAME:${{ github.sha }}"
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH,MEDIUM'
