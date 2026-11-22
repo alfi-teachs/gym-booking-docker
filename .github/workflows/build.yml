@@ -8,5 +8,11 @@ jobs:
   build-test-push:
     runs-on: ubuntu-latest
     steps:
-      - name: Say hello
-        run: echo "Hello from GitHub Actions"
+      - name: List files BEFORE checkout
+        run: ls -la
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: List files AFTER checkout
+        run: ls -la
