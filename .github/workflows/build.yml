@@ -1,14 +1,14 @@
-name: build scan and push
-"on":
+name: Build, scan and push
+
+on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write # lets the job request an OIDC
-  
+  id-token: write # lets the job request an OIDC token for AWS
+
 jobs:
   build-test-push:
     runs-on: ubuntu-latest
@@ -16,18 +16,11 @@ jobs:
       IMAGE_NAME: gym-api
 
     steps:
-  
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: List files AFTER checkout
-        run: ls -la
-
       - name: Build image
-        run: docker build -t "$IMAGE_NAME:${{ github.sha }}" -t "$IMAGE_NAME:latest" ./api  
-
-      - name: List images
-        run: docker images
+        run: docker build -t "$IMAGE_NAME:${{ github.sha }}" -t "$IMAGE_NAME:latest" ./api
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -54,8 +47,8 @@ jobs:
 
       - name: Stop containers
         if: always()
-        run: docker compose down -v      
-  
+        run: docker compose down -v
+
       - name: Configure AWS credentials (OIDC)
         if: github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@v4
@@ -77,4 +70,4 @@ jobs:
           for TAG in "${{ github.sha }}" latest; do
             docker tag "$IMAGE_NAME:$TAG" "$REGISTRY/$REPOSITORY:$TAG"
             docker push "$REGISTRY/$REPOSITORY:$TAG"
-          done 
+          done
