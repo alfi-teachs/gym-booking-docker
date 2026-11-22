@@ -1,0 +1,12 @@
+name: build scan and push
+"on":
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say hello
+        run: echo "Hello from GitHub Actions"
